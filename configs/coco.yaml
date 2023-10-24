@@ -1,13 +1,13 @@
 DATASET:
-  TRAIN: "E:/dataset/license_plate_chars/train.txt"
-  VAL: "E:/dataset/license_plate_chars/val.txt"
+  TRAIN: "data/train.txt"
+  VAL: "data/val.txt"
   NAMES: "configs/coco.names"
 MODEL:
   NC: 84
   INPUT_WIDTH: 352
   INPUT_HEIGHT: 352
 TRAIN:
-  LR: 0.001
+  LR: 0.0003
   THRESH: 0.25
   WARMUP: True
   BATCH_SIZE: 64

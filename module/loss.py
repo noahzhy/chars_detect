@@ -1,6 +1,9 @@
 import math
+
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+
 
 class DetectorLoss(nn.Module):
     def __init__(self, device):    
@@ -85,7 +88,6 @@ class DetectorLoss(nn.Module):
             gt_cls.append(gt[..., 1].long()[j])
 
         return gt_box, gt_cls, ps_index
-
         
     def forward(self, preds, targets):
         # 初始化loss值
@@ -93,10 +95,10 @@ class DetectorLoss(nn.Module):
         cls_loss, iou_loss, obj_loss = ft([0]), ft([0]), ft([0])
 
         # 定义obj和cls的损失函数
-        BCEcls = nn.NLLLoss() 
+        BCEcls = nn.NLLLoss()
         # smmoth L1相比于bce效果最好
         BCEobj = nn.SmoothL1Loss(reduction='none')
-        
+
         # 构建ground truth
         gt_box, gt_cls, ps_index = self.build_target(preds, targets)
 

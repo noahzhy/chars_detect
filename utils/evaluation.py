@@ -43,7 +43,7 @@ class CocoDetectionEvaluator():
             for j in range(pred.shape[0]):
                 k += 1
                 coco_pred.dataset["images"].append({"id": i})
-                coco_pred.dataset["annotations"].append({"image_id": i, "category_id": np.array(pred[j, 0], dtype=np.int32),
+                coco_pred.dataset["annotations"].append({"image_id": i, "category_id": np.int32(pred[j, 0]),
                                                         "score": pred[j, 1], "bbox": np.hstack([pred[j, 2:4], pred[j, 4:6] - pred[j, 2:4]]),
                                                         "area": np.prod(pred[j, 4:6] - pred[j, 2:4]),
                                                         "id": k})

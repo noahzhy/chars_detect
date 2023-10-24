@@ -2,6 +2,8 @@ import os
 import cv2
 import onnx
 import time
+import glob
+import random
 import argparse
 from onnxsim import simplify
 
@@ -20,9 +22,9 @@ if __name__ == '__main__':
     # 指定训练配置文件
     parser = argparse.ArgumentParser()
     parser.add_argument('--yaml', type=str, default="configs/coco.yaml", help='.yaml config')
-    parser.add_argument('--weight', type=str, default="checkpoint/weight_AP0595_0.951_230.pth", help='.weight config')
+    parser.add_argument('--weight', type=str, default="checkpoint/weight_AP05_0.9946318665641644_180.pth", help='.weight config')
     parser.add_argument('--img', type=str, default='test.jpg', help='The path of test image')
-    parser.add_argument('--thresh', type=float, default=0.75, help='The path of test image')
+    parser.add_argument('--thresh', type=float, default=0.2, help='The path of test image')
     parser.add_argument('--onnx', action="store_true", default=False, help='Export onnx file')
     parser.add_argument('--torchscript', action="store_true", default=False, help='Export torchscript file')
     parser.add_argument('--cpu', action="store_true", default=False, help='Run on cpu')
@@ -33,16 +35,7 @@ if __name__ == '__main__':
     assert os.path.exists(opt.img), "请指定正确的测试图像路径"
 
     # 选择推理后端
-    if opt.cpu:
-        print("run on cpu...")
-        device = torch.device("cpu")
-    else:
-        if torch.cuda.is_available():
-            print("run on gpu...")
-            device = torch.device("cuda")
-        else:
-            print("run on cpu...")
-            device = torch.device("cpu")     
+    device = torch.device("cpu")     
 
     # 解析yaml配置文件
     cfg = LoadYaml(opt.yaml)    
@@ -54,9 +47,11 @@ if __name__ == '__main__':
     model.load_state_dict(torch.load(opt.weight, map_location=device))
     #sets the module in eval node
     model.eval()
+
+    path = random.choice(glob.glob("./data/val/*.jpg"))
     
     # 数据预处理
-    ori_img = cv2.imread(opt.img)
+    ori_img = cv2.imread(path)
     res_img = cv2.resize(ori_img, (cfg.input_width, cfg.input_height), interpolation = cv2.INTER_LINEAR) 
     img = res_img.reshape(1, cfg.input_height, cfg.input_width, 3)
     img = torch.from_numpy(img.transpose(0, 3, 1, 2))
@@ -116,8 +111,8 @@ if __name__ == '__main__':
         x1, y1 = int(box[0] * W), int(box[1] * H)
         x2, y2 = int(box[2] * W), int(box[3] * H)
 
-        cv2.rectangle(ori_img, (x1, y1), (x2, y2), (255, 255, 0), 2)
-        cv2.putText(ori_img, '%.2f' % obj_score, (x1, y1 - 5), 0, 0.7, (0, 255, 0), 2)	
-        cv2.putText(ori_img, category, (x1, y1 - 25), 0, 0.7, (0, 255, 0), 2)
+        cv2.rectangle(ori_img, (x1, y1), (x2, y2), (0, 0, 255), 1)
+        cv2.putText(ori_img, '%.2f' % obj_score, (x1, y1 - 5), 0, 0.5, (0, 255, 0), 1)	
+        cv2.putText(ori_img, category, (x1, y2 + 10), 0, 0.5, (255, 0, 0), 1)
 
     cv2.imwrite("result.png", ori_img)

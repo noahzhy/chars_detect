@@ -1,9 +1,9 @@
 import os
-import cv2
-import numpy as np
-
-import torch
 import random
+
+import cv2
+import torch
+import numpy as np
 
 
 # cv2_imread to support Chinese path

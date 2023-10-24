@@ -4,6 +4,8 @@ import torch
 import argparse
 from tqdm import tqdm
 from torch import optim
+# nn
+import torch.nn as nn
 from torchsummary import summary
 
 from utils.tool import *
@@ -19,19 +21,16 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class FastestDet:
     def __init__(self):
-        # 指定训练配置文件
         parser = argparse.ArgumentParser()
         parser.add_argument('--yaml', type=str, default="configs/coco.yaml", help='.yaml config')
-        parser.add_argument('--weight', type=str, default=None, help='.weight config')
+        parser.add_argument('--weight', type=str, default="checkpoint/weight_AP05_0.9946318665641644_180.pth", help='.weight config')
 
         opt = parser.parse_args()
         assert os.path.exists(opt.yaml), "请指定正确的配置文件路径"
 
-        # 解析yaml配置文件
         self.cfg = LoadYaml(opt.yaml)    
         print(self.cfg) 
 
-        # 初始化模型结构
         if opt.weight is not None:
             print("load weight from:%s"%opt.weight)
             self.model = Detector(self.cfg.category_num, True).to(device)
@@ -39,20 +38,23 @@ class FastestDet:
         else:
             self.model = Detector(self.cfg.category_num, False).to(device)
 
+        # if torch.cuda.device_count() > 1:
+        #     self.model = nn.DataParallel(self.model)
+
         # # 打印网络各层的张量维度
         summary(self.model, input_size=(3, self.cfg.input_height, self.cfg.input_width))
 
         #构建优化器
         print("use SGD optimizer")
-        # self.optimizer = optim.SGD(params=self.model.parameters(),
-        #                            lr=self.cfg.learn_rate,
-        #                            momentum=0.949,
-        #                            weight_decay=0.0005,
-        #                            )
-        self.optimizer = optim.Adam(params=self.model.parameters(),
-                                    lr=self.cfg.learn_rate,
-                                    weight_decay=0.0005,
-                                    )
+        self.optimizer = optim.SGD(params=self.model.parameters(),
+                                   lr=self.cfg.learn_rate,
+                                   momentum=0.949,
+                                   weight_decay=0.0005,
+                                   )
+        # self.optimizer = optim.Adam(params=self.model.parameters(),
+        #                             lr=self.cfg.learn_rate,
+        #                             weight_decay=0.0005,
+        #                             )
         # 学习率衰减策略
         self.scheduler = optim.lr_scheduler.MultiStepLR(self.optimizer,
                                                         milestones=self.cfg.milestones,
